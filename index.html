@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StockPro | Inventory Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#0f172a;--mu:#64748b;--bd:#e5e9f2;--pr:#4f46e5;--pr2:#7c3aed;--ok:#059669;--wn:#d97706;--er:#dc2626;--sh:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.05)}
+[data-t=dark]{--bg:#0b1020;--card:#131a2e;--tx:#e8ecf8;--mu:#8b96b3;--bd:#222c47;--sh:0 8px 28px rgba(0,0,0,.35)}
+*{box-sizing:border-box;margin:0}
+body{font:14px/1.5 Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx);transition:background .3s,color .3s}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button,input,select{font:inherit;color:inherit}
+.app{display:flex;min-height:100vh}
+aside{width:240px;background:var(--card);border-right:1px solid var(--bd);padding:20px 14px;position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;gap:6px;z-index:20;transition:transform .3s}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;padding:4px 10px 18px}
+.logo b{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--pr),var(--pr2));color:#fff;display:grid;place-items:center}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:10px;color:var(--mu);cursor:pointer;border:0;background:none;text-align:left;width:100%;font-weight:500;transition:.2s}
+.nav:hover{background:var(--bg);color:var(--tx);transform:translateX(3px)}
+.nav.on{background:linear-gradient(135deg,var(--pr),var(--pr2));color:#fff;box-shadow:0 6px 16px rgba(79,70,229,.35)}
+main{margin-left:240px;flex:1;padding:24px 28px;min-width:0}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+.top h1{font-size:22px;flex:1}
+.burger{display:none}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--bd);background:var(--card);padding:9px 14px;border-radius:10px;cursor:pointer;font-weight:500;transition:.2s}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.btn.p{background:linear-gradient(135deg,var(--pr),var(--pr2));color:#fff;border:0}
+.btn.ic{padding:8px}
+.btn.d:hover{color:var(--er)}
+.view{animation:in .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:18px;box-shadow:var(--sh);transition:.25s}
+.stat{display:flex;gap:14px;align-items:center;animation:in .5s both}
+.stat:hover{transform:translateY(-4px)}
+.stat .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:#fff}
+.stat small{color:var(--mu)}.stat h2{font-size:24px;line-height:1.2}
+.cols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+.card h3{font-size:15px;margin-bottom:14px}
+.bar{margin-bottom:12px}.bar div:first-child{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.bar i{display:block;height:8px;border-radius:8px;background:var(--bd);overflow:hidden}
+.bar i b{display:block;height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,var(--pr),var(--pr2));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.row:last-child{border:0}.row small{color:var(--mu)}
+.tools{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:200px;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:0 12px;color:var(--mu)}
+.search input{border:0;outline:0;background:none;padding:10px 0;width:100%}
+.tw{overflow-x:auto;padding:0}
+table{width:100%;border-collapse:collapse;min-width:680px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);padding:14px 16px;border-bottom:1px solid var(--bd)}
+td{padding:13px 16px;border-bottom:1px solid var(--bd)}
+tbody tr{transition:background .2s;animation:in .4s both}
+tbody tr:hover{background:var(--bg)}
+td .act{display:flex;gap:6px}
+.badge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.b-ok{background:rgba(5,150,105,.12);color:var(--ok)}.b-wn{background:rgba(217,119,6,.14);color:var(--wn)}.b-er{background:rgba(220,38,38,.12);color:var(--er)}
+.empty{text-align:center;color:var(--mu);padding:40px}
+.ov{position:fixed;inset:0;background:rgba(8,12,28,.55);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:50;animation:fade .2s;padding:16px}
+@keyframes fade{from{opacity:0}}
+.modal{background:var(--card);border-radius:18px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow:auto;animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:scale(.92);opacity:0}}
+.modal h3{display:flex;justify-content:space-between;margin-bottom:16px;font-size:18px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f label{font-size:12px;color:var(--mu);font-weight:500;display:block}.f .w{grid-column:1/-1}
+.f input,.f select{width:100%;margin-top:4px;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);outline:0;transition:.2s}
+.f input:focus,.f select:focus{border-color:var(--pr);box-shadow:0 0 0 3px rgba(79,70,229,.15)}
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+#toast{position:fixed;right:20px;bottom:20px;z-index:99;display:flex;flex-direction:column;gap:8px}
+.t{background:var(--tx);color:var(--bg);padding:11px 16px;border-radius:10px;animation:in .3s;box-shadow:var(--sh)}
+.t.e{background:var(--er);color:#fff}
+.login{min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 20%,rgba(79,70,229,.25),transparent 45%),radial-gradient(circle at 80% 80%,rgba(124,58,237,.25),transparent 45%),var(--bg);padding:16px}
+.login .card{width:100%;max-width:390px;padding:32px;animation:pop .5s}
+.login .logo{justify-content:center}.login .f{grid-template-columns:1fr}.login p{text-align:center;color:var(--mu);margin:-8px 0 18px}
+.demo{background:rgba(217,119,6,.12);color:var(--wn);padding:8px 14px;border-radius:10px;margin-bottom:16px;font-size:13px}
+@media(max-width:860px){aside{transform:translateX(-100%)}aside.o{transform:none}main{margin-left:0;padding:16px}.burger{display:inline-flex}.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="root"></div><div id="toast"></div>
+<script>
+/* ====== SUPABASE SETTINGS: apni keys yahan daalein ====== */
+const CFG = { url: 'https://vfhvrohkzlqbhiyzyogg.supabase.co', key: 'sb_publishable_1Hi6FAPYPI5NZ3vXrBOdTw_IW6lb27m' };
+/* ======================================================= */
+const live = !CFG.url.startsWith('YOUR');
+const sb = live ? supabase.createClient(CFG.url, CFG.key) : null;
+
+const P = {
+ grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+ box:'<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>',
+ truck:'<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>',
+ swap:'<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+ plus:'<path d="M5 12h14M12 5v14"/>',
+ search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+ edit:'<path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+ trash:'<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+ dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+ warn:'<path d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/>',
+ out:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+ x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ menu:'<path d="M3 12h18M3 6h18M3 18h18"/>',
+ usd:'<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'
+};
+const ic = n => `<svg class="i" viewBox="0 0 24 24">${P[n]}</svg>`;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => '$' + Number(n || 0).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+const uid = () => Math.random().toString(36).slice(2, 10);
+const ago = d => new Date(d).toLocaleString([], {dateStyle:'medium', timeStyle:'short'});
+
+/* ---------- Data layer (Supabase or demo mode) ---------- */
+const now = () => new Date().toISOString();
+const demo = {
+ suppliers:[{id:'s1',name:'Apex Distributors',contact:'Daniel Reed',email:'sales@apex.com',phone:'+1 555 0101',created_at:now()},{id:'s2',name:'Nova Supplies',contact:'Maria Lopez',email:'hello@nova.com',phone:'+1 555 0202',created_at:now()}],
+ products:[
+  {id:'p1',sku:'LAP-001',name:'Business Laptop 15"',category:'Electronics',supplier_id:'s1',quantity:24,min_stock:8,cost:640,price:899,created_at:now()},
+  {id:'p2',sku:'MON-014',name:'27" 4K Monitor',category:'Electronics',supplier_id:'s1',quantity:6,min_stock:8,cost:210,price:329,created_at:now()},
+  {id:'p3',sku:'CHR-220',name:'Ergonomic Chair',category:'Furniture',supplier_id:'s2',quantity:15,min_stock:5,cost:95,price:169,created_at:now()},
+  {id:'p4',sku:'DSK-310',name:'Standing Desk',category:'Furniture',supplier_id:'s2',quantity:0,min_stock:4,cost:180,price:289,created_at:now()},
+  {id:'p5',sku:'PEN-900',name:'Gel Pen Box (50)',category:'Stationery',supplier_id:'s2',quantity:120,min_stock:30,cost:6,price:12,created_at:now()}],
+ movements:[{id:'m1',product_id:'p1',type:'in',qty:10,note:'Purchase order #1042',created_at:now()}]
+};
+const db = {
+ async all(t){
+  if(!live) return structuredClone(demo[t]);
+  const {data,error} = await sb.from(t).select('*').order('created_at',{ascending:false}); if(error) throw error; return data;
+ },
+ async save(t,row){
+  if(!live){ if(row.id) Object.assign(demo[t].find(r=>r.id==row.id),row); else demo[t].unshift({...row,id:uid(),created_at:now()}); return; }
+  const {error} = row.id ? await sb.from(t).update(row).eq('id',row.id) : await sb.from(t).insert(row); if(error) throw error;
+ },
+ async del(t,id){
+  if(!live){ demo[t]=demo[t].filter(r=>r.id!=id); return; }
+  const {error} = await sb.from(t).delete().eq('id',id); if(error) throw error;
+ }
+};
+
+/* ---------- State ---------- */
+const S = {view:'dash', q:'', products:[], suppliers:[], movements:[]};
+const pName = id => (S.products.find(p=>p.id==id)||{}).name || '-';
+const sName = id => (S.suppliers.find(s=>s.id==id)||{}).name || '-';
+const status = p => p.quantity<=0 ? ['Out of stock','b-er'] : p.quantity<=p.min_stock ? ['Low stock','b-wn'] : ['In stock','b-ok'];
+
+function toast(m, err){ const d=document.createElement('div'); d.className='t'+(err?' e':''); d.textContent=m; $('#toast').append(d); setTimeout(()=>d.remove(),3200); }
+async function load(){ try{ [S.products,S.suppliers,S.movements] = await Promise.all([db.all('products'),db.all('suppliers'),db.all('movements')]); }catch(e){ toast(e.message,1); } render(); }
+
+/* ---------- Layout ---------- */
+const NAV = [['dash','grid','Dashboard'],['products','box','Products'],['moves','swap','Stock Movements'],['suppliers','truck','Suppliers']];
+const TITLES = {dash:'Dashboard',products:'Products',moves:'Stock Movements',suppliers:'Suppliers'};
+
+function shell(){
+ $('#root').innerHTML = `<div class="app"><aside id="sd">
+  <div class="logo"><b>${ic('box')}</b>StockPro</div>
+  ${NAV.map(n=>`<button class="nav" data-v="${n[0]}">${ic(n[1])}${n[2]}</button>`).join('')}
+  <div style="flex:1"></div>
+  <button class="nav" id="th">${ic('moon')}Toggle theme</button>
+  ${live?`<button class="nav" id="lo">${ic('out')}Sign out</button>`:''}
+ </aside><main>
+  <div class="top"><button class="btn ic burger" id="bg">${ic('menu')}</button><h1 id="ttl"></h1><div id="ta" style="display:flex;gap:10px"></div></div>
+  ${live?'':'<div class="demo">Demo mode: data sirf browser memory mein hai. Supabase keys daal kar live database use karein.</div>'}
+  <div id="vw"></div></main></div>`;
+ document.querySelectorAll('.nav[data-v]').forEach(b=>b.onclick=()=>{S.view=b.dataset.v;S.q='';$('#sd').classList.remove('o');render();});
+ $('#th').onclick=()=>{const d=document.documentElement;d.dataset.t=d.dataset.t==='dark'?'':'dark';localStorage.setItem('sp-t',d.dataset.t||'');};
+ $('#bg').onclick=()=>$('#sd').classList.toggle('o');
+ if(live) $('#lo').onclick=async()=>{await sb.auth.signOut();login();};
+}
+
+function render(){
+ if(!$('#vw')) shell();
+ document.querySelectorAll('.nav[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===S.view));
+ $('#ttl').textContent = TITLES[S.view];
+ const adds = {products:['Add Product',()=>productForm()],moves:['Record Movement',()=>moveForm()],suppliers:['Add Supplier',()=>supplierForm()]};
+ const a = adds[S.view];
+ $('#ta').innerHTML = (S.view==='products'||S.view==='moves' ? `<button class="btn" id="ex">${ic('dl')}Export CSV</button>`:'') + (a?`<button class="btn p" id="ad">${ic('plus')}${a[0]}</button>`:'');
+ if(a) $('#ad').onclick=a[1];
+ if($('#ex')) $('#ex').onclick=exportCSV;
+ const v = $('#vw'); v.innerHTML = `<div class="view">${({dash,products,moves,suppliers})[S.view]()}</div>`;
+ bind();
+}
+
+function bind(){
+ const s=$('#sq'); if(s){ s.oninput=e=>{S.q=e.target.value;const p=e.target.selectionStart;render();const n=$('#sq');n.focus();n.setSelectionRange(p,p);}; }
+ document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>({products:productForm,suppliers:supplierForm})[S.view](b.dataset.e));
+ document.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{ if(!confirm('Kya aap sure hain? Ye delete ho jayega.')) return; try{await db.del(S.view==='moves'?'movements':S.view,b.dataset.d);toast('Deleted');load();}catch(e){toast(e.message,1);} });
+ document.querySelectorAll('[data-n]').forEach(el=>{const to=+el.dataset.n,m=el.dataset.m,t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/900),v=to*(1-Math.pow(1-k,3));el.textContent=m?money(v):Math.round(v);if(k<1)requestAnimationFrame(f);})(t0);});
+ setTimeout(()=>document.querySelectorAll('[data-w]').forEach(b=>b.style.width=b.dataset.w+'%'),60);
+}
+
+/* ---------- Views ---------- */
+function dash(){
+ const P_=S.products, val=P_.reduce((a,p)=>a+p.quantity*p.cost,0), low=P_.filter(p=>p.quantity<=p.min_stock), units=P_.reduce((a,p)=>a+p.quantity,0);
+ const cats={}; P_.forEach(p=>{const c=p.category||'Uncategorized';cats[c]=(cats[c]||0)+p.quantity*p.cost;});
+ const mx=Math.max(1,...Object.values(cats));
+ const stat=(i,c,l,n,m,d)=>`<div class="card stat" style="animation-delay:${d}ms"><div class="ico" style="background:${c}">${ic(i)}</div><div><small>${l}</small><h2 data-n="${n}" ${m?'data-m="1"':''}>0</h2></div></div>`;
+ return `<div class="grid">
+  ${stat('box','linear-gradient(135deg,#4f46e5,#7c3aed)','Total Products',P_.length,0,0)}
+  ${stat('grid','linear-gradient(135deg,#0891b2,#06b6d4)','Units in Stock',units,0,80)}
+  ${stat('usd','linear-gradient(135deg,#059669,#10b981)','Inventory Value',val,1,160)}
+  ${stat('warn','linear-gradient(135deg,#d97706,#f59e0b)','Low / Out of Stock',low.length,0,240)}</div>
+ <div class="cols"><div class="card"><h3>Stock value by category</h3>
+  ${Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="bar"><div><span>${esc(c)}</span><b>${money(v)}</b></div><i><b data-w="${v/mx*100}"></b></i></div>`).join('')||'<div class="empty">No data</div>'}</div>
+  <div class="card"><h3>Low stock alerts</h3>
+  ${low.map(p=>`<div class="row"><div>${esc(p.name)}<br><small>${esc(p.sku)}</small></div><span class="badge ${status(p)[1]}">${p.quantity} left</span></div>`).join('')||'<div class="empty">All items are well stocked</div>'}</div></div>
+ <div class="card" style="margin-top:16px"><h3>Recent movements</h3>
+  ${S.movements.slice(0,5).map(m=>`<div class="row"><div>${esc(pName(m.product_id))}<br><small>${ago(m.created_at)}</small></div><span class="badge ${m.type==='in'?'b-ok':m.type==='out'?'b-er':'b-wn'}">${m.type.toUpperCase()} ${m.qty}</span></div>`).join('')||'<div class="empty">No movements yet</div>'}</div>`;
+}
+const tools = ph => `<div class="tools"><div class="search">${ic('search')}<input id="sq" placeholder="${ph}" value="${esc(S.q)}"></div></div>`;
+const match = (...f) => f.join(' ').toLowerCase().includes(S.q.toLowerCase());
+const acts = id => `<div class="act"><button class="btn ic" data-e="${id}">${ic('edit')}</button><button class="btn ic d" data-d="${id}">${ic('trash')}</button></div>`;
+
+function products(){
+ const r = S.products.filter(p=>match(p.name,p.sku,p.category,sName(p.supplier_id)));
+ return tools('Search by name, SKU, category or supplier...') + `<div class="card tw"><table><thead><tr><th>SKU</th><th>Product</th><th>Category</th><th>Supplier</th><th>Qty</th><th>Price</th><th>Status</th><th></th></tr></thead><tbody>
+ ${r.map((p,i)=>`<tr style="animation-delay:${i*35}ms"><td>${esc(p.sku)}</td><td><b>${esc(p.name)}</b></td><td>${esc(p.category)}</td><td>${esc(sName(p.supplier_id))}</td><td>${p.quantity}</td><td>${money(p.price)}</td><td><span class="badge ${status(p)[1]}">${status(p)[0]}</span></td><td>${acts(p.id)}</td></tr>`).join('')}
+ </tbody></table>${r.length?'':'<div class="empty">No products found</div>'}</div>`;
+}
+function moves(){
+ const r = S.movements.filter(m=>match(pName(m.product_id),m.note,m.type));
+ return tools('Search movements...') + `<div class="card tw"><table><thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Qty</th><th>Note</th><th></th></tr></thead><tbody>
+ ${r.map((m,i)=>`<tr style="animation-delay:${i*35}ms"><td>${ago(m.created_at)}</td><td>${esc(pName(m.product_id))}</td><td><span class="badge ${m.type==='in'?'b-ok':m.type==='out'?'b-er':'b-wn'}">${m.type.toUpperCase()}</span></td><td>${m.qty}</td><td>${esc(m.note)}</td><td><div class="act"><button class="btn ic d" data-d="${m.id}">${ic('trash')}</button></div></td></tr>`).join('')}
+ </tbody></table>${r.length?'':'<div class="empty">No movements recorded</div>'}</div>`;
+}
+function suppliers(){
+ const r = S.suppliers.filter(s=>match(s.name,s.contact,s.email));
+ return tools('Search suppliers...') + `<div class="card tw"><table><thead><tr><th>Supplier</th><th>Contact</th><th>Email</th><th>Phone</th><th>Products</th><th></th></tr></thead><tbody>
+ ${r.map((s,i)=>`<tr style="animation-delay:${i*35}ms"><td><b>${esc(s.name)}</b></td><td>${esc(s.contact)}</td><td>${esc(s.email)}</td><td>${esc(s.phone)}</td><td>${S.products.filter(p=>p.supplier_id==s.id).length}</td><td>${acts(s.id)}</td></tr>`).join('')}
+ </tbody></table>${r.length?'':'<div class="empty">No suppliers found</div>'}</div>`;
+}
+
+/* ---------- Forms ---------- */
+function modal(title, fields, vals, onSave){
+ const o=document.createElement('div'); o.className='ov';
+ o.innerHTML=`<div class="modal"><h3>${title}<button class="btn ic" id="mx">${ic('x')}</button></h3><div class="f">${fields.map(f=>`<label class="${f.w?'w':''}">${f.l}${f.o?`<select name="${f.k}">${f.o.map(x=>`<option value="${x[0]}" ${x[0]==vals[f.k]?'selected':''}>${esc(x[1])}</option>`).join('')}</select>`:`<input name="${f.k}" type="${f.t||'text'}" value="${esc(vals[f.k]??'')}" ${f.r?'required':''} ${f.t==='number'?'step="any" min="0"':''}>`}</label>`).join('')}</div>
+ <div class="foot"><button class="btn" id="mc">Cancel</button><button class="btn p" id="ms">Save</button></div></div>`;
+ document.body.append(o);
+ const close=()=>o.remove(); o.querySelector('#mx').onclick=o.querySelector('#mc').onclick=close; o.onclick=e=>{if(e.target===o)close();};
+ o.querySelector('#ms').onclick=async()=>{
+  const row={}; let ok=true;
+  fields.forEach(f=>{const el=o.querySelector(`[name=${f.k}]`);let v=el.value.trim();if(f.r&&!v)ok=false;row[f.k]=f.t==='number'?+v||0:(v===''&&f.k.endsWith('_id')?null:v);});
+  if(!ok) return toast('Required fields bharein',1);
+  try{ await onSave(row); close(); load(); }catch(e){ toast(e.message,1); }
+ };
+}
+function productForm(id){
+ const p = S.products.find(x=>x.id==id)||{quantity:0,min_stock:5};
+ modal(id?'Edit Product':'Add Product',[
+  {k:'sku',l:'SKU',r:1},{k:'name',l:'Product name',r:1},{k:'category',l:'Category'},
+  {k:'supplier_id',l:'Supplier',o:[['','None'],...S.suppliers.map(s=>[s.id,s.name])]},
+  {k:'quantity',l:'Quantity',t:'number'},{k:'min_stock',l:'Minimum stock',t:'number'},{k:'cost',l:'Cost price',t:'number'},{k:'price',l:'Selling price',t:'number'}],p,
+  async r=>{ if(id) r.id=id; await db.save('products',r); toast('Product saved'); });
+}
+function supplierForm(id){
+ modal(id?'Edit Supplier':'Add Supplier',[{k:'name',l:'Company name',r:1,w:1},{k:'contact',l:'Contact person'},{k:'phone',l:'Phone'},{k:'email',l:'Email',t:'email',w:1}],S.suppliers.find(x=>x.id==id)||{},
+  async r=>{ if(id) r.id=id; await db.save('suppliers',r); toast('Supplier saved'); });
+}
+function moveForm(){
+ if(!S.products.length) return toast('Pehle product add karein',1);
+ modal('Record Stock Movement',[{k:'product_id',l:'Product',w:1,o:S.products.map(p=>[p.id,`${p.name} (${p.quantity})`])},
+  {k:'type',l:'Type',o:[['in','Stock In'],['out','Stock Out'],['adjust','Set exact quantity']]},{k:'qty',l:'Quantity',t:'number',r:1},{k:'note',l:'Note / Reference',w:1}],{type:'in'},
+  async r=>{
+   const p=S.products.find(x=>x.id==r.product_id); let q=p.quantity;
+   if(r.type==='in') q+=r.qty; else if(r.type==='out'){ if(r.qty>q) throw new Error('Stock kam hai (available: '+q+')'); q-=r.qty; } else q=r.qty;
+   await db.save('products',{id:p.id,quantity:q}); await db.save('movements',r); toast('Stock updated');
+  });
+}
+function exportCSV(){
+ const rows = S.view==='products' ? [['SKU','Name','Category','Supplier','Qty','Min','Cost','Price'],...S.products.map(p=>[p.sku,p.name,p.category,sName(p.supplier_id),p.quantity,p.min_stock,p.cost,p.price])]
+  : [['Date','Product','Type','Qty','Note'],...S.movements.map(m=>[m.created_at,pName(m.product_id),m.type,m.qty,m.note])];
+ const csv = rows.map(r=>r.map(c=>`"${String(c??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=S.view+'.csv'; a.click();
+}
+
+/* ---------- Auth ---------- */
+function login(){
+ $('#root').innerHTML = `<div class="login"><div class="card"><div class="logo"><b>${ic('box')}</b>StockPro</div><p>Sign in to manage your inventory</p>
+ <div class="f"><label>Email<input id="em" type="email"></label><label>Password<input id="pw" type="password"></label></div>
+ <div class="foot" style="justify-content:stretch"><button class="btn" id="su" style="flex:1;justify-content:center">Sign up</button><button class="btn p" id="si" style="flex:1;justify-content:center">Sign in</button></div></div></div>`;
+ const go = up => async()=>{ const c={email:$('#em').value,password:$('#pw').value}; const {error}=await (up?sb.auth.signUp(c):sb.auth.signInWithPassword(c)); if(error) return toast(error.message,1); up&&toast('Account created. Ab sign in karein.'); if(!up) start(); };
+ $('#si').onclick=go(0); $('#su').onclick=go(1);
+}
+function start(){ shell(); load(); }
+(async()=>{
+ document.documentElement.dataset.t = localStorage.getItem('sp-t')||'';
+ if(!live) return start();
+ const {data}=await sb.auth.getSession(); data.session ? start() : login();
+})();
+</script>
+</body>
+</html>
